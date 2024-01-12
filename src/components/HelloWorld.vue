@@ -2,8 +2,8 @@
   <div>
     <h1>Liste des Personnes</h1>
     <ul>
-      <li v-for="personne in personnes" :key="personne.id">
-        {{ personne.prenom }} {{ personne.nom }}
+      <li v-for="user in users" :key="user.id">
+        {{ user.name }} {{ user.lastname }}
       </li>
     </ul>
   </div>
@@ -17,14 +17,14 @@ import { collection, getDocs } from 'firebase/firestore';
 export default {
   name: 'HelloWorld',
   setup() {
-    const personnes = ref([]);
+    const users = ref([]);
 
     onMounted(async () => {
-      const querySnapshot = await getDocs(collection(db, 'personnes'));
-      personnes.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const querySnapshot = await getDocs(collection(db, 'users'));
+      users.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     });
 
-    return { personnes };
+    return { users };
   }
 }
 </script>
