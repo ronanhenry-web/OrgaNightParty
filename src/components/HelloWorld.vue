@@ -1,37 +1,52 @@
 <template>
   <div>
-    <h1>Liste des Personnes</h1>
-    <el-table :data="users" style="width: 100%">
-      <el-table-column prop="name" label="Prénom" width="150" :formatter="formatFirstLetterToUpperCase" />
-      <el-table-column prop="lastname" label="Nom" width="150" :formatter="formatUppercase" />
-      <el-table-column prop="age" label="Âge" width="80" />
-      <el-table-column prop="feedback" label="Feedback" width="200" :formatter="formatFirstLetterToUpperCase" />
-      <el-table-column prop="gender" label="Genre" width="80" :formatter="formatUppercase" />
-      <el-table-column prop="paid" label="Payé" width="100" :formatter="formatBoolean" />
-      <el-table-column prop="present" label="Présent" width="100" :formatter="formatBoolean" />
-      <el-table-column prop="team.id" label="Équipe" width="150" :formatter="formatFirstLetterToUpperCase" />
-      <el-table-column prop="vegan" label="Végan" width="100" :formatter="formatBoolean" />
-      <el-table-column fixed="right" label="Opérations" width="180">
-        <template #default="{row}">
-          <el-button type="primary" size="small" @click="handleDetail(row)">Détail</el-button>
-          <el-button type="success" size="small" @click="handleEdit(row)">Éditer</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div>
+      <h1>Liste des Part</h1>
+      <el-select
+        v-model="selectedTeam"
+        filterable
+        placeholder="Filtrer par équipe"
+        style="width: 200px"
+      >
+      <el-option
+        v-for="team in teams"
+        :key="team.value"
+        :label="team.label"
+        :value="team.value"
+      />
+      </el-select>
+      <el-table :data="users" style="width: 50%; margin: auto; margin-top: 5%;">
+          <el-table-column prop="name" label="Prénom" width="150" :formatter="formatFirstLetterToUpperCase" align="center" />
+          <el-table-column prop="lastname" label="Nom" width="150" :formatter="formatUppercase" align="center" />
+          <el-table-column prop="age" label="Âge" width="80" align="center" />
+          <el-table-column prop="feedback" label="Feedback" width="200" :formatter="formatFirstLetterToUpperCase" align="center" />
+          <el-table-column prop="gender" label="Genre" width="80" :formatter="formatUppercase" align="center" />
+          <el-table-column prop="paid" label="Payé" width="100" :formatter="formatBoolean" align="center" />
+          <el-table-column prop="present" label="Présent" width="100" :formatter="formatBoolean" align="center" />
+          <el-table-column prop="team.id" label="Équipe" width="150" :formatter="formatFirstLetterToUpperCase" align="center" />
+          <el-table-column prop="vegan" label="Végan" width="100" :formatter="formatBoolean" align="center" />
+          <el-table-column fixed="right" label="Opérations" width="180"  align="center">
+            <template #default="{row}">
+              <el-button type="primary" size="small" @click="handleDetail(row)">Détail</el-button>
+              <el-button type="success" size="small" @click="handleEdit(row)">Éditer</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { db } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { useStore } from '@/store/Database';
 import { ElTable, ElTableColumn, ElButton  } from 'element-plus';
 
-const users = ref([]);
+const { users, teams, fetchUsers, fetchTeams } = useStore();
+const selectedTeam = ref('');
 
 onMounted(async () => {
-  const querySnapshot = await getDocs(collection(db, 'users'));
-  users.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  await fetchUsers();
+  await fetchTeams();
 });
 
 const formatFirstLetterToUpperCase = (row, column, cellValue) => {
