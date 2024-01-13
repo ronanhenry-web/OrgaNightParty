@@ -2,6 +2,27 @@
   <div>
     <div>
       <h1>Catalogue des Participants</h1>
+      <!-- Search bar -->
+      <div>
+        <el-autocomplete
+          v-model="state"
+          :fetch-suggestions="querySearch"
+          popper-class="my-autocomplete"
+          placeholder="Chercher une personne"
+          @select="handleSelect"
+        >
+          <template #suffix>
+            <el-icon class="el-input__icon" @click="handleIconClick">
+              <edit />
+            </el-icon>
+          </template>
+          <template #default="{ item }">
+            <div class="value">{{ item.value }}</div>
+            <span class="link">{{ item.link }}</span>
+          </template>
+        </el-autocomplete>
+      </div>
+      <!-- Filter -->
       <div>
         <el-select
           v-model="selectedTeam"
@@ -66,7 +87,8 @@
           <el-option label="Non Végan" value="false" />
         </el-select>
       </div>
-      <el-table :data="filteredUsers" style="width: 50%; margin: auto; margin-top: 5%;">
+      <!-- Table -->
+      <el-table :data="filteredResults" style="width: 50%; margin: auto; margin-top: 5%;">
           <el-table-column prop="name" label="Prénom" width="150" :formatter="formatFirstLetterToUpperCase" align="center" />
           <el-table-column prop="lastname" label="Nom" width="150" :formatter="formatUppercase" align="center" />
           <el-table-column prop="gender" label="Genre" width="80" :formatter="formatUppercase" align="center" />
@@ -91,6 +113,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useStore } from '@/store/Database';
 import { ElTable, ElTableColumn, ElButton  } from 'element-plus';
+import { Edit } from '@element-plus/icons-vue';
 
 const { users, teams, fetchUsers, fetchTeams } = useStore();
 const selectedTeam = ref('');
@@ -99,19 +122,63 @@ const selectedPaid = ref('');
 const selectedPresent = ref('');
 const selectedVegan = ref('');
 
+// Search bar
+const state = ref('');
+const links = ref([]);
+
+const querySearch = (queryString, cb) => {
+  const results = queryString
+    ? users.value.filter(createFilter(queryString))
+    : users.value;
+  cb(results.map(user => ({ value: user.name + ' ' + user.lastname })));
+};
+
+const createFilter = (queryString) => {
+  return (user) => {
+    return (
+      user.name.toLowerCase().includes(queryString.toLowerCase()) || 
+      user.lastname.toLowerCase().includes(queryString.toLowerCase())
+    );
+  };
+};
+
+const loadAll = () => {
+  return [
+    // Mes données
+  ];
+};
+
+const handleSelect = (item) => {
+  console.log(item);
+};
+
+const handleIconClick = (ev) => {
+  console.log(ev);
+};
+
 onMounted(async () => {
   await fetchUsers();
   await fetchTeams();
+  links.value = loadAll();
 });
 
 // Filter
-const filteredUsers = computed(() => {
-  return users.value.filter(user => {
-    return (selectedTeam.value === '' || user.team.id === selectedTeam.value) &&
-            (selectedGender.value === '' || user.gender === selectedGender.value) &&
-            (selectedPaid.value === '' || user.paid.toString() === selectedPaid.value) &&
-            (selectedPresent.value === '' || user.present.toString() === selectedPresent.value) &&
-            (selectedVegan.value === '' || user.vegan.toString() === selectedVegan.value);
+const filteredResults = computed(() => {
+  const filteredBySearch = state.value
+    ? users.value.filter(user =>
+        user.name.toLowerCase().includes(state.value.toLowerCase()) ||
+        user.lastname.toLowerCase().includes(state.value.toLowerCase())
+      )
+    : users.value;
+
+  return filteredBySearch.filter(user => {
+    return (
+      (selectedTeam.value === '' || user.team.id === selectedTeam.value) &&
+      (selectedGender.value === '' || user.gender === selectedGender.value) &&
+      (selectedPaid.value === '' || user.paid.toString() === selectedPaid.value) &&
+      (selectedPresent.value === '' || user.present.toString() === selectedPresent.value) &&
+      (selectedVegan.value === '' || user.vegan.toString() === selectedVegan.value)
+    );
   });
 });
 
