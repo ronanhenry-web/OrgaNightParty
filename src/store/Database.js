@@ -1,7 +1,6 @@
-// useStore.js
 import { ref } from 'vue';
 import { db } from '@/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 
 const users = ref([]);
 const teams = ref([]);
@@ -19,6 +18,16 @@ const fetchTeams = async () => {
     }));
 };
 
+export const addUser = async (userData) => {
+    try {
+        const newUserRef = doc(collection(db, 'users'));
+    await setDoc(newUserRef, userData);
+    } catch (error) {
+        console.error('Erreur lors de l’ajout de l’utilisateur:', error);
+    throw error;
+    }
+};
+
 export const useStore = () => {
-    return { users, teams, fetchUsers, fetchTeams };
+    return { users, teams, fetchUsers, fetchTeams, addUser  };
 };

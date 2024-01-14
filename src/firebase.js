@@ -12,5 +12,4 @@ export const firebaseApp = initializeApp({
 });
 
 export const db = getFirestore(firebaseApp)
-
 export const todosRef = collection(db, 'todos')

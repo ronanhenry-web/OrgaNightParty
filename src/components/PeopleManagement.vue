@@ -1,7 +1,19 @@
 <template>
   <div>
     <div>
+      <h3>Ajouter des métriques genre moyennes et chiffres clés</h3>
+    </div>
+    <div>
       <h1>Catalogue des Participants</h1>
+      <!-- Add User -->
+      <div>
+        <h2>Ajouter un nouvel utilisateur</h2>
+        <form @submit.prevent="handleAddUser">
+          <input v-model="newUser.lastname" placeholder="Prénom">
+          <input v-model="newUser.name" placeholder="Nom">
+          <button type="submit">Ajouter</button>
+        </form>
+      </div>
       <!-- Search bar -->
       <div>
         <el-autocomplete
@@ -89,6 +101,12 @@
       </div>
       <!-- Table -->
       <el-table :data="filteredResults" style="width: 50%; margin: auto; margin-top: 5%;">
+        <!-- à développer checkbox -->
+        <el-table-column label="Participation" width="180" align="center">
+          <template #default="{row}">
+            <el-checkbox v-model="row.party" @change="handleCheckboxChange(row)"></el-checkbox>
+          </template>
+        </el-table-column>
           <el-table-column prop="name" label="Prénom" width="150" :formatter="formatFirstLetterToUpperCase" align="center" />
           <el-table-column prop="lastname" label="Nom" width="150" :formatter="formatUppercase" align="center" />
           <el-table-column prop="gender" label="Genre" width="80" :formatter="formatUppercase" align="center" />
@@ -97,16 +115,18 @@
           <el-table-column prop="vegan" label="Végan" width="100" :formatter="formatBoolean" align="center" />
           <el-table-column prop="team.id" label="Équipe" width="150" :formatter="formatFirstLetterToUpperCase" align="center" />
           <el-table-column prop="age" label="Âge" width="80" align="center" />
+          <el-table-column prop="ref" label="Réf" width="200" :formatter="formatFirstLetterToUpperCase" align="center" />
           <el-table-column prop="feedback" label="Feedback" width="200" :formatter="formatFirstLetterToUpperCase" align="center" />
           <el-table-column fixed="right" label="Opérations" width="180"  align="center">
             <template #default="{row}">
-              <el-button type="primary" size="small" @click="handleDetail(row)">Détail</el-button>
+              <el-button type="primary" size="small" @click="showDetailPopup(row)">Détail</el-button>
               <el-button type="success" size="small" @click="handleEdit(row)">Éditer</el-button>
             </template>
           </el-table-column>
         </el-table>
     </div>
   </div>
+  <user-detail-popup v-if="showPopup" @close="showPopup = false" :user="selectedUser" />
 </template>
 
 <script setup>
@@ -114,13 +134,49 @@ import { ref, computed, onMounted } from 'vue';
 import { useStore } from '@/store/Database';
 import { ElTable, ElTableColumn, ElButton  } from 'element-plus';
 import { Edit } from '@element-plus/icons-vue';
+import UserDetailPopup from "@/components/UserDetailPopup.vue";
+import { v4 as uuidv4 } from 'uuid';
 
-const { users, teams, fetchUsers, fetchTeams } = useStore();
+const { users, teams, fetchUsers, fetchTeams, addUser } = useStore();
 const selectedTeam = ref('');
 const selectedGender = ref('');
 const selectedPaid = ref('');
 const selectedPresent = ref('');
 const selectedVegan = ref('');
+const showPopup = ref(false);
+const selectedUser = ref(null);
+const generateNumericId = () => {
+  return uuidv4();
+};
+
+// Add User
+const newUser = ref({
+  id: generateNumericId(),
+  name: '',
+  lastname: '',
+  paid: false,
+  present: false,
+  vegan: false,
+});
+
+const handleAddUser = async () => {
+  try {
+    const userId = generateNumericId();
+    const userWithId = { ...newUser.value, id: userId };
+
+    await addUser(newUser.value);
+    newUser.value = { id: userWithId, name: '', lastname: '', paid: false, present: false, vegan: false };
+    await fetchUsers();
+  } catch (error) {
+    console.error("Erreur lors de l'ajout de l'utilisateur", error);
+  }
+};
+
+// Checkbox
+// à développer
+const handleCheckboxChange = async () => {
+  console.log(" ");
+};
 
 // Search bar
 const state = ref('');
@@ -188,6 +244,7 @@ const formatFirstLetterToUpperCase = (row, column, cellValue) => {
   return cellValue.charAt(0).toUpperCase() + cellValue.slice(1).toLowerCase();
 };
 const formatUppercase = (row, column, cellValue) => {
+  if (!cellValue) return '';
   return cellValue.toUpperCase();
 };
 const formatBoolean = (row, column, value) => {
@@ -195,8 +252,10 @@ const formatBoolean = (row, column, value) => {
 };
 
 // Operations
-const handleDetail = (user) => {
+const showDetailPopup  = (user) => {
   console.log('Détails pour:', user);
+  selectedUser.value = user;
+  showPopup.value = true;
 };
 
 const handleEdit = (user) => {
