@@ -1,4 +1,4 @@
-# Projet Vue.js et Firebase
+# Projet Orga Night Party
 
 Objectif organiser des grandes soirées facilement (en cours de réalisation)
 
